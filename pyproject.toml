@@ -1,0 +1,10 @@
+[project]
+name = "auto-work-shift"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "openpyxl>=3.1.5",
+    "tkcalendar>=1.6.1",
+]
