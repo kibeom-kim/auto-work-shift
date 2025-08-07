@@ -23,12 +23,24 @@ class WorkScheduleApp:
             next_year += 1
 
         self.year_var = tk.StringVar(value=str(next_year))
-        self.year_cb = ttk.Combobox(root, textvariable=self.year_var, values=[str(y) for y in range(2020, 2031)], width=6, state="readonly")
+        self.year_cb = ttk.Combobox(
+            root,
+            textvariable=self.year_var,
+            values=[str(y) for y in range(2020, 2031)],
+            width=6,
+            state="readonly",
+        )
         self.year_cb.grid(row=0, column=1)
 
         tk.Label(root, text="대상 월").grid(row=0, column=2)
         self.month_var = tk.StringVar(value=str(next_month).zfill(2))
-        self.month_cb = ttk.Combobox(root, textvariable=self.month_var, values=[str(m).zfill(2) for m in range(1, 13)], width=4, state="readonly")
+        self.month_cb = ttk.Combobox(
+            root,
+            textvariable=self.month_var,
+            values=[str(m).zfill(2) for m in range(1, 13)],
+            width=4,
+            state="readonly",
+        )
         self.month_cb.grid(row=0, column=3)
 
         # === 사용자 입력 ===
@@ -37,19 +49,25 @@ class WorkScheduleApp:
         self.name_entry.grid(row=1, column=1)
 
         self.driver_var = tk.BooleanVar()
-        tk.Checkbutton(root, text="운전 가능", variable=self.driver_var).grid(row=2, column=0, columnspan=2)
+        tk.Checkbutton(root, text="운전 가능", variable=self.driver_var).grid(
+            row=2, column=0, columnspan=2
+        )
 
         tk.Label(root, text="가능 코스").grid(row=3, column=0)
         self.course_vars = [tk.BooleanVar(), tk.BooleanVar()]
-        tk.Checkbutton(root, text="1코스", variable=self.course_vars[0]).grid(row=3, column=1, sticky='w')
-        tk.Checkbutton(root, text="2코스", variable=self.course_vars[1]).grid(row=3, column=1, sticky='e')
+        tk.Checkbutton(root, text="1코스", variable=self.course_vars[0]).grid(
+            row=3, column=1, sticky="w"
+        )
+        tk.Checkbutton(root, text="2코스", variable=self.course_vars[1]).grid(
+            row=3, column=1, sticky="e"
+        )
 
         # === 휴가 날짜 선택 ===
         tk.Label(root, text="휴가 날짜 선택").grid(row=4, column=0, columnspan=2)
         self.vacation_calendar = Calendar(
             root,
-            selectmode='day',
-            date_pattern='yyyy-mm-dd',
+            selectmode="day",
+            date_pattern="yyyy-mm-dd",
             font=("Arial", 12),
             showweeknumbers=False,  # 주 번호 제거
             foreground="black",  # 모든 글씨 검정색
@@ -63,8 +81,12 @@ class WorkScheduleApp:
         self.vacation_list = tk.Listbox(root, width=30, height=4)
         self.vacation_list.grid(row=6, column=0, columnspan=2)
 
-        tk.Button(root, text="휴가 날짜 추가", command=self.add_vacation_date).grid(row=7, column=0)
-        tk.Button(root, text="선택 날짜 삭제", command=self.remove_vacation_date).grid(row=7, column=1)
+        tk.Button(root, text="휴가 날짜 추가", command=self.add_vacation_date).grid(
+            row=7, column=0
+        )
+        tk.Button(root, text="선택 날짜 삭제", command=self.remove_vacation_date).grid(
+            row=7, column=1
+        )
 
         # === 근무일 수 ===
         tk.Label(root, text="근무 일수").grid(row=8, column=0)
@@ -72,8 +94,12 @@ class WorkScheduleApp:
         self.workdays_spinbox.grid(row=8, column=1)
 
         # === 사용자 추가 / 수정 ===
-        tk.Button(root, text="사용자 추가", command=self.add_user).grid(row=9, column=0, pady=5)
-        tk.Button(root, text="수정 준비", command=self.prepare_edit_user).grid(row=9, column=1, pady=5)
+        tk.Button(root, text="사용자 추가", command=self.add_user).grid(
+            row=9, column=0, pady=5
+        )
+        tk.Button(root, text="수정 준비", command=self.prepare_edit_user).grid(
+            row=9, column=1, pady=5
+        )
 
         # === 사용자 목록 ===
         tk.Label(root, text="입력된 사용자 목록").grid(row=0, column=4)
@@ -81,7 +107,9 @@ class WorkScheduleApp:
         self.user_listbox.grid(row=1, column=4, rowspan=8, padx=10)
 
         # === 확인 / 저장 ===
-        tk.Button(root, text="입력 확인 및 엑셀 생성", command=self.show_users_and_save).grid(row=9, column=4, pady=10)
+        tk.Button(
+            root, text="입력 확인 및 엑셀 생성", command=self.show_users_and_save
+        ).grid(row=9, column=4, pady=10)
 
     def add_vacation_date(self):
         date = self.vacation_calendar.get_date()
@@ -98,7 +126,7 @@ class WorkScheduleApp:
     def get_weekday(self, date_str):
         try:
             date_obj = datetime.strptime(date_str, "%Y-%m-%d")
-            return ['월', '화', '수', '목', '금', '토', '일'][date_obj.weekday()]
+            return ["월", "화", "수", "목", "금", "토", "일"][date_obj.weekday()]
         except:
             return ""
 
@@ -127,7 +155,7 @@ class WorkScheduleApp:
             "가능 코스": courses,
             "휴가": vacations,
             "근무일수": workdays,
-            "대상 월": target_month
+            "대상 월": target_month,
         }
 
         if self.selected_user_index is not None:
@@ -168,7 +196,9 @@ class WorkScheduleApp:
     def refresh_user_list(self):
         self.user_listbox.delete(0, tk.END)
         for idx, user in enumerate(self.users, start=1):
-            self.user_listbox.insert(tk.END, f"{idx}. {user['이름']} ({user['대상 월']})")
+            self.user_listbox.insert(
+                tk.END, f"{idx}. {user['이름']} ({user['대상 월']})"
+            )
 
     def reset_form(self):
         self.name_entry.delete(0, tk.END)
@@ -189,9 +219,9 @@ class WorkScheduleApp:
         popup.title("사용자 정보 확인")
 
         popup.grab_set()
-        popup.attributes('-topmost', True)
+        popup.attributes("-topmost", True)
 
-        text = tk.Text(popup, width=70, height=30, state='normal')
+        text = tk.Text(popup, width=70, height=30, state="normal")
         text.pack()
 
         for idx, user in enumerate(self.users, start=1):
@@ -202,24 +232,30 @@ class WorkScheduleApp:
             text.insert(tk.END, f"  근무일수: {user['근무일수']}\n")
             text.insert(tk.END, f"  대상 월: {user['대상 월']}\n\n")
 
-        text.config(state='disabled')
+        text.config(state="disabled")
 
-        tk.Button(popup, text="엑셀 생성", command=lambda: self.save_to_excel(popup)).pack(pady=10)
+        tk.Button(
+            popup, text="엑셀 생성", command=lambda: self.save_to_excel(popup)
+        ).pack(pady=10)
 
     def save_to_excel(self, popup_window=None):
         wb = Workbook()
         ws = wb.active
-        ws.append(["이름", "운전 가능", "가능 코스", "휴가 날짜", "근무일수", "대상 월"])
+        ws.append(
+            ["이름", "운전 가능", "가능 코스", "휴가 날짜", "근무일수", "대상 월"]
+        )
 
         for user in self.users:
-            ws.append([
-                user["이름"],
-                "O" if user["운전 가능"] else "X",
-                ','.join(map(str, user["가능 코스"])),
-                ', '.join(user["휴가"]),
-                user["근무일수"],
-                user["대상 월"]
-            ])
+            ws.append(
+                [
+                    user["이름"],
+                    "O" if user["운전 가능"] else "X",
+                    ",".join(map(str, user["가능 코스"])),
+                    ", ".join(user["휴가"]),
+                    user["근무일수"],
+                    user["대상 월"],
+                ]
+            )
 
         wb.save("근무표_입력정보.xlsx")
         messagebox.showinfo("완료", "엑셀 파일이 저장되었습니다.")
