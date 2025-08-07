@@ -14,7 +14,7 @@ class WorkScheduleApp:
         self.selected_user_index = None
 
         # === 대상 월 선택 ===
-        tk.Label(root, text="대상 연도").grid(row=0, column=0)
+        tk.Label(root, text="대상 년월").grid(row=0, column=0)
         today = date.today()
         next_month = today.month + 1
         next_year = today.year
@@ -32,7 +32,6 @@ class WorkScheduleApp:
         )
         self.year_cb.grid(row=0, column=1)
 
-        tk.Label(root, text="대상 월").grid(row=0, column=2)
         self.month_var = tk.StringVar(value=str(next_month).zfill(2))
         self.month_cb = ttk.Combobox(
             root,
@@ -41,18 +40,24 @@ class WorkScheduleApp:
             width=4,
             state="readonly",
         )
-        self.month_cb.grid(row=0, column=3)
+        self.month_cb.grid(row=0, column=2)
 
         # === 사용자 입력 ===
         tk.Label(root, text="이름").grid(row=1, column=0)
         self.name_entry = tk.Entry(root)
         self.name_entry.grid(row=1, column=1)
 
-        self.driver_var = tk.BooleanVar()
-        tk.Checkbutton(root, text="운전 가능", variable=self.driver_var).grid(
-            row=2, column=0, columnspan=2
-        )
+        # === 역할 선택 ===
+        tk.Label(root, text="역할").grid(row=2, column=0)
+        self.role_var = tk.StringVar(value="운전자")
+        tk.Radiobutton(
+            root, text="운전자", variable=self.role_var, value="운전자"
+        ).grid(row=2, column=1, sticky="w")
+        tk.Radiobutton(
+            root, text="보조자", variable=self.role_var, value="보조자"
+        ).grid(row=2, column=1, sticky="e")
 
+        # === 코스 선택 ===
         tk.Label(root, text="가능 코스").grid(row=3, column=0)
         self.course_vars = [tk.BooleanVar(), tk.BooleanVar()]
         tk.Checkbutton(root, text="1코스", variable=self.course_vars[0]).grid(
@@ -69,8 +74,8 @@ class WorkScheduleApp:
             selectmode="day",
             date_pattern="yyyy-mm-dd",
             font=("Arial", 12),
-            showweeknumbers=False,  # 주 번호 제거
-            foreground="black",  # 모든 글씨 검정색
+            showweeknumbers=False,
+            foreground="black",
             weekendforeground="black",
             headersforeground="black",
             firstweekday="sunday",
@@ -93,32 +98,43 @@ class WorkScheduleApp:
         self.workdays_spinbox = tk.Spinbox(root, from_=0, to=31, width=5)
         self.workdays_spinbox.grid(row=8, column=1)
 
+        # === 지정 근무 요일 ===
+        tk.Label(root, text="지정 근무 요일").grid(row=9, column=0, sticky="w")
+
+        # Frame 추가로 레이아웃 정리
+        weekday_frame = tk.Frame(root)
+        weekday_frame.grid(row=9, column=1, columnspan=5, sticky="w")
+
+        self.weekday_vars = [tk.BooleanVar() for _ in range(5)]  # 월~금
+        weekday_names = ["월", "화", "수", "목", "금"]
+        for i, name in enumerate(weekday_names):
+            tk.Checkbutton(
+                weekday_frame, text=name, variable=self.weekday_vars[i]
+            ).grid(row=0, column=i, padx=5)
+
         # === 사용자 추가 / 수정 ===
         tk.Button(root, text="사용자 추가", command=self.add_user).grid(
-            row=9, column=0, pady=5
+            row=10, column=0, pady=5
         )
         tk.Button(root, text="수정 준비", command=self.prepare_edit_user).grid(
-            row=9, column=1, pady=5
+            row=10, column=1, pady=5
         )
 
         # === 사용자 목록 ===
-        tk.Label(root, text="입력된 사용자 목록").grid(row=0, column=4)
-        self.user_listbox = tk.Listbox(root, width=40, height=20)
-        self.user_listbox.grid(row=1, column=4, rowspan=8, padx=10)
+        tk.Label(root, text="입력된 사용자 목록").grid(row=0, column=6)
+        self.user_listbox = tk.Listbox(root, width=50, height=25)
+        self.user_listbox.grid(row=1, column=6, rowspan=9, padx=10)
 
         # === 확인 / 저장 ===
         tk.Button(
             root, text="입력 확인 및 엑셀 생성", command=self.show_users_and_save
-        ).grid(row=9, column=4, pady=10)
+        ).grid(row=10, column=6, pady=10)
 
     def add_vacation_date(self):
         date = self.vacation_calendar.get_date()
         if date not in self.vacation_days:
             self.vacation_days.append(date)
-            # 날짜 정렬
             self.vacation_days.sort(key=lambda d: datetime.strptime(d, "%Y-%m-%d"))
-
-            # 리스트 갱신
             self.vacation_list.delete(0, tk.END)
             for d in self.vacation_days:
                 self.vacation_list.insert(tk.END, f"{d} ({self.get_weekday(d)})")
@@ -139,10 +155,11 @@ class WorkScheduleApp:
 
     def add_user(self):
         name = self.name_entry.get()
-        driver = self.driver_var.get()
+        role = self.role_var.get()
         courses = [i + 1 for i, var in enumerate(self.course_vars) if var.get()]
         vacations = self.vacation_days.copy()
         workdays = int(self.workdays_spinbox.get())
+        weekdays = [i for i, var in enumerate(self.weekday_vars) if var.get()]
         target_month = f"{self.year_var.get()}-{self.month_var.get()}"
 
         if not name:
@@ -151,10 +168,11 @@ class WorkScheduleApp:
 
         user = {
             "이름": name,
-            "운전 가능": driver,
+            "역할": role,
             "가능 코스": courses,
             "휴가": vacations,
             "근무일수": workdays,
+            "지정요일": weekdays,
             "대상 월": target_month,
         }
 
@@ -177,17 +195,20 @@ class WorkScheduleApp:
 
         self.name_entry.delete(0, tk.END)
         self.name_entry.insert(0, user["이름"])
-        self.driver_var.set(user["운전 가능"])
+        self.role_var.set(user["역할"])
         for i in range(2):
             self.course_vars[i].set(i + 1 in user["가능 코스"])
 
         self.vacation_days = user["휴가"]
         self.vacation_list.delete(0, tk.END)
         for v in self.vacation_days:
-            self.vacation_list.insert(tk.END, v)
+            self.vacation_list.insert(tk.END, f"{v} ({self.get_weekday(v)})")
 
         self.workdays_spinbox.delete(0, tk.END)
         self.workdays_spinbox.insert(0, str(user["근무일수"]))
+
+        for i in range(5):
+            self.weekday_vars[i].set(i in user["지정요일"])
 
         year, month = user["대상 월"].split("-")
         self.year_var.set(year)
@@ -202,13 +223,15 @@ class WorkScheduleApp:
 
     def reset_form(self):
         self.name_entry.delete(0, tk.END)
-        self.driver_var.set(False)
+        self.role_var.set("운전자")
         for var in self.course_vars:
             var.set(False)
         self.vacation_days.clear()
         self.vacation_list.delete(0, tk.END)
         self.workdays_spinbox.delete(0, tk.END)
         self.workdays_spinbox.insert(0, "0")
+        for var in self.weekday_vars:
+            var.set(False)
 
     def show_users_and_save(self):
         if not self.users:
@@ -217,23 +240,25 @@ class WorkScheduleApp:
 
         popup = tk.Toplevel(self.root)
         popup.title("사용자 정보 확인")
-
         popup.grab_set()
         popup.attributes("-topmost", True)
 
-        text = tk.Text(popup, width=70, height=30, state="normal")
+        text = tk.Text(popup, width=80, height=30, state="normal")
         text.pack()
 
         for idx, user in enumerate(self.users, start=1):
             text.insert(tk.END, f"[{idx}] {user['이름']}\n")
-            text.insert(tk.END, f"  운전 가능: {'O' if user['운전 가능'] else 'X'}\n")
+            text.insert(tk.END, f"  역할: {user['역할']}\n")
             text.insert(tk.END, f"  가능 코스: {user['가능 코스']}\n")
             text.insert(tk.END, f"  휴가 날짜: {', '.join(user['휴가'])}\n")
             text.insert(tk.END, f"  근무일수: {user['근무일수']}\n")
+            text.insert(
+                tk.END,
+                f"  지정 요일: {[['월', '화', '수', '목', '금'][i] for i in user['지정요일']]}\n",
+            )
             text.insert(tk.END, f"  대상 월: {user['대상 월']}\n\n")
 
         text.config(state="disabled")
-
         tk.Button(
             popup, text="엑셀 생성", command=lambda: self.save_to_excel(popup)
         ).pack(pady=10)
@@ -241,25 +266,36 @@ class WorkScheduleApp:
     def save_to_excel(self, popup_window=None):
         wb = Workbook()
         ws = wb.active
+        ws.title = "입력정보"
         ws.append(
-            ["이름", "운전 가능", "가능 코스", "휴가 날짜", "근무일수", "대상 월"]
+            [
+                "이름",
+                "역할",
+                "가능 코스",
+                "휴가 날짜",
+                "근무일수",
+                "지정 요일",
+                "대상 월",
+            ]
         )
 
         for user in self.users:
             ws.append(
                 [
                     user["이름"],
-                    "O" if user["운전 가능"] else "X",
+                    user["역할"],
                     ",".join(map(str, user["가능 코스"])),
                     ", ".join(user["휴가"]),
                     user["근무일수"],
+                    ",".join(
+                        [["월", "화", "수", "목", "금"][i] for i in user["지정요일"]]
+                    ),
                     user["대상 월"],
                 ]
             )
 
         wb.save("근무표_입력정보.xlsx")
         messagebox.showinfo("완료", "엑셀 파일이 저장되었습니다.")
-
         if popup_window:
             popup_window.destroy()
 
